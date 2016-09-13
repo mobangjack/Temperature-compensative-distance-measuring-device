@@ -1,0 +1,88 @@
+C51 COMPILER V7.06   MAIN                                                                  09/18/2014 17:43:26 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\OBJ\main.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE main.c BROWSE DEBUG OBJECTEXTEND PRINT(.\LIST\main.lst) OBJECT(.\OBJ\main.o
+                    -bj)
+
+stmt level    source
+
+   1          #include<reg52.h> 
+   2          #include<stdio.h>
+   3          #include<math.h>
+   4          #include "18b20.h"
+   5          #include "1602.h"
+   6          #include "delay.h"
+   7          #include "hcsr04.h"
+   8          
+   9           sbit KEY=P1^3;
+  10           sbit LED=P1^4;
+  11           float CurrentTemperature;//当前温度
+  12           float CurrentSpeed;//当前声速
+  13           float CurrentDistance;//距离
+  14           char TempDisplayBuf[16];//温度显示字符串缓冲
+  15           char DistanceDisplayBuf[16];//距离显示字符串缓冲
+  16          
+  17          void main (void)
+  18          {
+  19   1      LED=0;//测量状态指示：待测量           
+  20   1      LCD_Init();           //初始化液晶
+  21   1      DelayMs(20);          //延时有助于稳定
+  22   1      LCD_Clear();          //清屏
+  23   1      LCD_Write_String(0,0," Sonar System ");
+  24   1      LCD_Write_String(0,1," By: Bangjie Mo ");
+  25   1      DelayS(3);
+  26   1      LCD_Clear();          //清屏
+  27   1      LCD_Write_String(0,0,"press the key to");
+  28   1      LCD_Write_String(0,1,"measure distance");
+  29   1      while(1)
+  30   1      {
+  31   2      if(KEY==0)//检测按键状态
+  32   2      {
+  33   3      while(KEY==0);//等待按键释放
+  34   3      LED=1;//测量状态指示：正在测量
+  35   3      CurrentTemperature=ReadTemperature();//获取当前温度
+  36   3      DelayMs(1);
+  37   3      CurrentSpeed=331.4*sqrt(1+CurrentTemperature/273);//计算当前声速
+  38   3      DelayMs(1);
+  39   3      CurrentDistance=MeasureDistance(CurrentSpeed);//测量距离
+  40   3      if(CurrentDistance>4000||CurrentDistance<20)//DS18B20的有效测量范围为20mm~4000mm
+  41   3      {
+  42   4      LCD_Clear();          //清屏
+  43   4      LCD_Write_String(0,0,"    Warning !   ");//超出测量范围警告
+  44   4      LCD_Write_String(0,1," Out of range ! ");//超出测量范围警告
+  45   4      LED=1;//灯亮警告
+  46   4      }
+  47   3      else
+  48   3      {
+  49   4      sprintf(TempDisplayBuf,"T = %6.3f",CurrentTemperature);//将测量值打印到字符串缓冲区
+  50   4      sprintf(DistanceDisplayBuf,"D = %8.3f mm",CurrentDistance);//将测量值打印到字符串缓冲区
+  51   4      DelayMs(1);
+  52   4      LCD_Clear();
+  53   4      LCD_Write_String(0,1,DistanceDisplayBuf);//显示测量距离
+  54   4      LCD_Write_String(0,0,TempDisplayBuf);//显示当前温度
+C51 COMPILER V7.06   MAIN                                                                  09/18/2014 17:43:26 PAGE 2   
+
+  55   4      LCD_Write_Char(13,0,0xDF);
+  56   4      LCD_Write_Char(14,0,'C');
+  57   4      LED=0;//测量状态指示：测量结束
+  58   4      DelayMs(1);
+  59   4      }
+  60   3      }
+  61   2      }
+  62   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    366    ----
+   CONSTANT SIZE    =    123    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     44    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

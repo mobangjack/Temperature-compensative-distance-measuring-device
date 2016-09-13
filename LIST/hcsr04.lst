@@ -1,0 +1,89 @@
+C51 COMPILER V7.06   HCSR04                                                                09/18/2014 17:43:26 PAGE 1   
+
+
+C51 COMPILER V7.06, COMPILATION OF MODULE HCSR04
+OBJECT MODULE PLACED IN .\OBJ\hcsr04.obj
+COMPILER INVOKED BY: D:\Keil\C51\BIN\C51.EXE hcsr04.c BROWSE DEBUG OBJECTEXTEND PRINT(.\LIST\hcsr04.lst) OBJECT(.\OBJ\hc
+                    -sr04.obj)
+
+stmt level    source
+
+   1          /**********************************
+   2          ******HC-SR04测距子程序************
+   3          **********************************/
+   4           #include <reg52.h>
+   5           #include <stdio.h>
+   6           #include <math.h>
+   7           #include "delay.h"
+   8           #include "hcsr04.h"
+   9          
+  10           
+  11           sbit TRIG=P1^6;//定义HC-SR04控制信号端口
+  12           sbit ECHO=P1^7;//定义HC-SR04回响信号端口
+  13          
+  14          
+  15          
+  16           //初始化HC-SR04
+  17           void Initialize_HCSR04()
+  18           {
+  19   1       TMOD|=0x01;//设置定时器工作模式
+  20   1       TH0=0;//装载定时器初值
+  21   1       TL0=0;
+  22   1       TRIG=0;
+  23   1       ECHO=0;
+  24   1       }
+  25          
+  26           //测距(连续快速测量7次，然后去掉一个最大值和一个最小值，最后再求平均)
+  27           float MeasureDistance(float CurrentSpeed)
+  28           {
+  29   1       float S=0;
+  30   1       float T=0;
+  31   1       unsigned char i,j;
+  32   1       float Data[7],tmp;
+  33   1       for(i=0;i<7;i++)
+  34   1       {
+  35   2       Initialize_HCSR04();
+  36   2       DelayUs2x(10);//延时15us
+  37   2       TRIG=1;
+  38   2       while(!ECHO); //等待高电平
+  39   2       TR0=1;        //开始计时
+  40   2       while(ECHO);  //等待低电平
+  41   2       TR0=0;        //停止计时
+  42   2       T=(TH0*256+TL0);//取出定时器值高8位和低8位合并
+  43   2       Data[i]=CurrentSpeed*T/2000;//单位：mm
+  44   2       }
+  45   1       for(i=0;i<7;i++)
+  46   1       {
+  47   2       for(j=0;j<7-i;j++)
+  48   2       {
+  49   3       if(Data[j]>Data[j+1])
+  50   3              {
+  51   4              tmp=Data[j];
+  52   4              Data[j]=Data[j+1];
+  53   4              Data[j+1]=tmp;
+  54   4              }
+C51 COMPILER V7.06   HCSR04                                                                09/18/2014 17:43:26 PAGE 2   
+
+  55   3       }
+  56   2       }
+  57   1       for(i=1;i<6;i++)
+  58   1       {
+  59   2       S+=Data[i];
+  60   2       }
+  61   1       return S/5;
+  62   1       }
+  63          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    313    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----      46
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
